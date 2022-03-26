@@ -11,12 +11,11 @@ import pandas as pd
 
 def test_univariate_gaussian():
     loc, var = 10, 1
-    np.random.seed(0)
     random = np.random.normal(loc, var, 1000)
 
     # Question 1 - Draw samples and print fitted model
-    model = UnivariateGaussian(True)
-    model.fit(random[0:101])
+    model = UnivariateGaussian()
+    model.fit(random)
     print(f'({model.mu_}, {model.var_})')
 
     # Question 2 - Empirically showing sample mean is consistent
@@ -79,7 +78,6 @@ def test_multivariate_gaussian():
                 max_log_likelihood = map[i, j]
                 arg_max = [f1, f3]
 
-    print(map)
     fig = px.imshow(map, x=linsp, y=linsp, labels=dict(x="f3", y="f1"),
                     title="Log-liklelihood of the randomized variables with "
                           "the original covariance and mean=[f1,0,f3,0]")

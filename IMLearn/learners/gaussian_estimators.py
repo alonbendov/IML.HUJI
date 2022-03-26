@@ -57,11 +57,11 @@ class UnivariateGaussian:
         Sets `self.mu_`, `self.var_` attributes according to calculated estimation (where
         estimator is either biased or unbiased). Then sets `self.fitted_` attribute to `True`
         """
-        vec_size = X.size
+        var_divisor = X.size if self.biased_ else (X.size - 1)
 
-        self.mu_ = X.mean() if self.biased_ else 0
-        self.var_ = sum((x - self.mu_) * (x - self.mu_) for x in X) / (
-                vec_size - 1)
+        self.mu_ = np.sum(X) / X.size
+        self.var_ = np.sum(np.power((X - self.mu_), 2)) / var_divisor
+
         self.fitted_ = True
         return self
 
@@ -109,8 +109,9 @@ class UnivariateGaussian:
         log_likelihood: float
             log-likelihood calculated
         """
-        return (-((X - mu) ** 2) / (2 * sigma)).sum() - np.log(
-            sqrt(2 * np.pi * sigma))
+        var = sigma ** 2
+        return np.sum(np.power((X - mu), 2)) / (-2 * var) - np.log(
+            np.power(2 * np.pi * var, X.size / 2))
 
 
 class MultivariateGaussian:
@@ -217,6 +218,7 @@ class MultivariateGaussian:
         log_likelihood: float
             log-likelihood calculated over all input data and under given parameters of Gaussian
         """
+
         def calc_exp_arg(row: np.ndarray):
             return (row - mu) @ np.linalg.inv(cov) @ (row - mu)
 
@@ -225,3 +227,12 @@ class MultivariateGaussian:
             np.power(np.pi * 2, X.shape[1]) * np.linalg.det(cov)))
         return arg + coef_log
 
+
+if __name__ == "__main__":
+    a = np.array(
+        [1, 5, 2, 3, 8, -4, -2, 5, 1, 10, -10, 4, 5, 2, 7, 1, 1, 3, 2, -1, -3,
+         1, -4, 1, 2, 1,
+         -4, -4, 1, 3, 2, 6, -6, 8, 3, -6, 4, 1, -2, 3, 1, 4, 1, 4, -2, 3, -1,
+         0, 3, 5, 0, -2])
+    print(UnivariateGaussian.log_likelihood(1, 1, a))
+    print(UnivariateGaussian.log_likelihood(10, 1, a))
