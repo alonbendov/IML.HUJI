@@ -9,3 +9,5 @@ __pycache__
 lab/.ipynb_checkpoints/
 code\ examples/.ipynb_checkpoints/
 submissions/
+**__pycache__
+**.ipynb_checkpoints
