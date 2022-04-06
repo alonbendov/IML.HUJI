@@ -51,10 +51,12 @@ def load_data(filename: str):
     first_sell = dates.min()
     from_first = (dates - first_sell).dt.days
     day_of_year = dates.dt.dayofyear
+    age_at_sell = dates.dt.year - df['yr_built']
     from_first = from_first.rename("days_delta")
     day_of_year = day_of_year.rename("day_of_year")
-    df = pd.concat([df.drop(['date'], axis=1), from_first, day_of_year],
-                   axis=1)
+    age_at_sell = age_at_sell.rename('age_at_sell')
+    df = pd.concat([df.drop(['date'], axis=1), from_first, day_of_year,
+                    age_at_sell],axis=1)
     # lat lng removal
     df = df.drop(['lat', 'long'], axis=1)
     # id removal
