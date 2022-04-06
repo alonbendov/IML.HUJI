@@ -33,7 +33,6 @@ class LinearRegression(BaseEstimator):
         """
         super().__init__()
         self.include_intercept_, self.coefs_ = include_intercept, None
-        self.fitted_ = False
 
     def _fit(self, X: np.ndarray, y: np.ndarray) -> NoReturn:
         """
@@ -55,7 +54,6 @@ class LinearRegression(BaseEstimator):
         if self.include_intercept_:
             X = np.c_[np.ones(n_samples), X]
         self.coefs_ = np.matmul(pinv(X), y)
-        self.fitted_ = True
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -71,9 +69,6 @@ class LinearRegression(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        if not self.fitted_:
-            raise ValueError(
-                "Regressor must first be fitted before calling this function")
         n_samples, n_features = X.shape
         if self.include_intercept_:
             X = np.c_[np.ones(n_samples), X]
@@ -96,7 +91,4 @@ class LinearRegression(BaseEstimator):
         loss : float
             Performance under MSE loss function
         """
-        if not self.fitted_:
-            raise ValueError(
-                "Regressor must first be fitted before calling this function")
         return mean_square_error(y, self._predict(X))
