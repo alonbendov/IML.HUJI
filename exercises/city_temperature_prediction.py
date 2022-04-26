@@ -92,6 +92,7 @@ if __name__ == '__main__':
     model.fit(israel_X['DayOfYear'], israel_y)
     country_loss = df.groupby('Country').apply(
         lambda x: model.loss(x['DayOfYear'], x['Temp']))
+    country_loss = country_loss.drop('Israel')
     fig = px.bar(country_loss,
                  title=f'Polynomial of Degree={OPTIMAL_K} '
                        f'Fitted on Israel - Loss by Country')
