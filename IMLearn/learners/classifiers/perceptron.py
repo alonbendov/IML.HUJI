@@ -82,13 +82,14 @@ class Perceptron(BaseEstimator):
         if self.include_intercept_:
             X = np.insert(X, 0, np.ones(X.shape[0]), 1)
 
-        for i in range(self.max_iter):
+        for i in range(self.max_iter_):
             changed = False
             for sample, label in zip(X, y):
-                if label*np.inner(sample, self.coefs_) <= 0:
+                if label*np.inner( self.coefs_, sample) <= 0:
                     self.coefs_ += label * sample
                     changed = True
                     self.callback_(self, sample, label)
+                    break
             if not changed:
                 return
 
@@ -110,7 +111,7 @@ class Perceptron(BaseEstimator):
         if self.include_intercept_:
             X = np.insert(X, 0, np.ones(X.shape[0]), 1)
 
-        return np.sign(np.matmul(X, self.coefs_))  # todo - what if zero
+        return np.sign(np.matmul(X, self.coefs_))
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -129,4 +130,4 @@ class Perceptron(BaseEstimator):
         loss : float
             Performance under missclassification loss function
         """
-        misclassification_error(y, self.predict(X))  # todo check 3rd arg
+        return misclassification_error(y, self.predict(X))
