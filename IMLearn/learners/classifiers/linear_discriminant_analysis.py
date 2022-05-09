@@ -50,21 +50,22 @@ class LDA(BaseEstimator):
         """
         n_samples, n_features = X.shape
         self.classes_, class_counts = np.unique(y, return_counts=True)
-        k = self.classes_.shape[0]
 
         self.pi_ = class_counts / n_samples
 
-        self.mu_ = np.zeros((class_counts, n_features))
+        self.mu_ = np.zeros((len(self.classes_), n_features))
         for i, cls in enumerate(self.classes_):
-            self.mu_[i] += np.sum(X[y == cls]) / class_counts[i]
+            self.mu_[i] += np.sum(X[y == cls], axis=0) / class_counts[i]
 
-        self.cov_ = np.zeros(k, k)
-        for sample, response in X, y:
-            x_minus_mu = sample - self.mu_[self.classes_ == y][0]
-            self.cov_ += np.outer(x_minus_mu, x_minus_mu)
+        ###
+        self.cov_ = np.zeros((n_features, n_features))
+        for sample, response in zip(X, y):
+            x_minus_mu = sample - self.mu_[self.classes_ == response][0]
+            self.cov_ = self.cov_ + np.outer(x_minus_mu, x_minus_mu)
 
-        self.cov_ /= n_samples
-        self._cov_inv = inv(self.cov_)  # todo maybe switch it to pinv
+        self.cov_ = np.divide(self.cov_, n_samples - len(self.classes_))
+        self._cov_inv = inv(self.cov_)
+
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -80,18 +81,18 @@ class LDA(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        aks = np.matmul(self.mu_, self._cov_inv.T)
         cov_inv_times_mu = np.matmul(self._cov_inv, self.mu_.T).T
+        aks = cov_inv_times_mu
         # ^The i'th row is cov_inv multiplied by x_i
-        bks = (cov_inv_times_mu * self._cov_inv).sum(-1)
+        almost_bks = (cov_inv_times_mu * self.mu_).sum(-1)
         # ^actually, we the i'th value in the vector this the dot product of the
         # i'th rows in the matrices cov_inv_times_mu & self._cov_inv
+        bks = np.log(self.pi_) - 0.5 * almost_bks
 
         akt_times_x = np.matmul(X, aks.T)
         args_rows_to_max = akt_times_x + np.tile(bks, (X.shape[0], 1))
         class_inds = np.argmax(args_rows_to_max,
                                axis=1)  # find argmax for each row
-
         return self.classes_[class_inds]
 
     def likelihood(self, X: np.ndarray) -> np.ndarray:
@@ -117,13 +118,13 @@ class LDA(BaseEstimator):
         log_likelihoods = []
         for yi, cls in enumerate(self.classes_):
             first_part = np.log(self.pi_[yi]) - \
-                       n_features * np.log(2 * np.pi) / 2 - np.log(
+                         n_features * np.log(2 * np.pi) / 2 - np.log(
                 det(self.cov_)) / 2
 
             x_minus_mu = (X - np.tile(self.mu_[yi], (n_samples, 1)))
             left_mul = np.matmul(self._cov_inv, x_minus_mu.T)
             mat_mul = (x_minus_mu.T * left_mul).sum(0)
-            log_like_yi = first_part - 0.5*mat_mul
+            log_like_yi = first_part - 0.5 * mat_mul
             log_likelihoods.append(log_like_yi)
 
         log_likelihoods = np.array(log_likelihoods)
