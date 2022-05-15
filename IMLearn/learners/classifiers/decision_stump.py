@@ -20,6 +20,7 @@ class DecisionStump(BaseEstimator):
     self.sign_: int
         The label to predict for samples where the value of the j'th feature is about the threshold
     """
+
     def __init__(self) -> DecisionStump:
         """
         Instantiate a Decision stump classifier
@@ -39,7 +40,16 @@ class DecisionStump(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        raise NotImplementedError()
+        min_err = -1
+        for i in range(X.shape[1]):
+            for sgn in [-1, 1]:
+                thresh, err = self._find_threshold(X[:, i], y, sgn)
+
+                if min_err == -1 or err < min_err:
+                    self.j_ = i
+                    self.sign_ = sgn
+                    self.threshold_ = thresh
+                    min_err = err
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -63,9 +73,11 @@ class DecisionStump(BaseEstimator):
         Feature values strictly below threshold are predicted as `-sign` whereas values which equal
         to or above the threshold are predicted as `sign`
         """
-        raise NotImplementedError()
+        return np.where(X[:, self.j_] >= self.threshold_, self.sign_,
+                        - self.sign_)
 
-    def _find_threshold(self, values: np.ndarray, labels: np.ndarray, sign: int) -> Tuple[float, float]:
+    def _find_threshold(self, values: np.ndarray, labels: np.ndarray,
+                        sign: int) -> Tuple[float, float]:
         """
         Given a feature vector and labels, find a threshold by which to perform a split
         The threshold is found according to the value minimizing the misclassification
@@ -95,7 +107,32 @@ class DecisionStump(BaseEstimator):
         For every tested threshold, values strictly below threshold are predicted as `-sign` whereas values
         which equal to or above the threshold are predicted as `sign`
         """
-        raise NotImplementedError()
+        argsort = np.argsort(values)
+        values = values[argsort]
+        labels = labels[argsort]
+
+        corrects_right = np.where(labels == sign, 1, 0).sum()
+        corrects_left = 0
+
+        best_corrects = corrects_right
+        best_thresh_ind = 0
+
+        candidates = np.append(values, values[-1] + 1)
+
+        for i in range(1, candidates.shape[0]):
+            if labels[i - 1] == sign:
+                corrects_right -= 1
+            else:
+                corrects_left += 1
+
+            if corrects_right + corrects_left > best_corrects:
+                best_corrects = corrects_right + corrects_left
+                best_thresh_ind = i
+
+        return candidates[best_thresh_ind]
+
+        # todo should i return +-inf where all labels are the same?
+
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -114,4 +151,4 @@ class DecisionStump(BaseEstimator):
         loss : float
             Performance under missclassification loss function
         """
-        raise NotImplementedError()
+        return ((y - self.predict(X)).sum() / 2) / X.shape[0]
