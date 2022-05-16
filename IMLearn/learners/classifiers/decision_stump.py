@@ -45,6 +45,7 @@ class DecisionStump(BaseEstimator):
             for sgn in [-1, 1]:
                 thresh, err = self._find_threshold(X[:, i], y, sgn)
 
+
                 if min_err == -1 or err < min_err:
                     self.j_ = i
                     self.sign_ = sgn
@@ -73,6 +74,7 @@ class DecisionStump(BaseEstimator):
         Feature values strictly below threshold are predicted as `-sign` whereas values which equal
         to or above the threshold are predicted as `sign`
         """
+
         return np.where(X[:, self.j_] >= self.threshold_, self.sign_,
                         - self.sign_)
 
@@ -129,8 +131,7 @@ class DecisionStump(BaseEstimator):
                 best_corrects = corrects_right + corrects_left
                 best_thresh_ind = i
 
-        return candidates[best_thresh_ind]
-
+        return candidates[best_thresh_ind], 1 - best_corrects / values.shape[0]
         # todo should i return +-inf where all labels are the same?
 
 
@@ -151,4 +152,4 @@ class DecisionStump(BaseEstimator):
         loss : float
             Performance under missclassification loss function
         """
-        return ((y - self.predict(X)).sum() / 2) / X.shape[0]
+        return (np.abs(y - self.predict(X)).sum() / 2) / X.shape[0]

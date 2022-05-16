@@ -62,11 +62,10 @@ class AdaBoost(BaseEstimator):
 
             eps = self.D_[y != model_pred].sum()
             if eps == 0:
-                self.models_ = [self.models_[-1]]
-                self.weights_ = [1]
-                return
-
-            self.weights_.append(0.5 * np.log(1 / eps - 1))
+                self.weights_ = [0] * len(self.weights_)
+                self.weights_.append(1)
+            else:
+                self.weights_.append(0.5 * np.log(1 / eps - 1))
             self.D_ = self.D_ * np.exp(
                 (-y) * self.weights_[-1] * model_pred)
             self.D_ = self.D_ / np.sum(self.D_)
@@ -124,7 +123,7 @@ class AdaBoost(BaseEstimator):
             Predicted responses of given samples
         """
         sums = 0
-        for model, weight in zip(self.models_, self.weights_)[:T]:
+        for model, weight in zip(self.models_[:T], self.weights_[:T]):
             sums += weight * model.predict(X)
         return np.sign(sums)
 
@@ -148,4 +147,4 @@ class AdaBoost(BaseEstimator):
         loss : float
             Performance under missclassification loss function
         """
-        return np.where(y != self.partial_predict(X, T), 1, 0).sum() / T
+        return np.where(y != self.partial_predict(X, T), 1, 0).sum() / y.shape[0]
