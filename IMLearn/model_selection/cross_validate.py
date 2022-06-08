@@ -6,7 +6,8 @@ from IMLearn import BaseEstimator
 
 
 def cross_validate(estimator: BaseEstimator, X: np.ndarray, y: np.ndarray,
-                   scoring: Callable[[np.ndarray, np.ndarray, ...], float], cv: int = 5) -> Tuple[float, float]:
+                   scoring: Callable[[np.ndarray, np.ndarray, ...], float],
+                   cv: int = 5) -> Tuple[float, float]:
     """
     Evaluate metric by cross-validation for given estimator
 
@@ -37,4 +38,30 @@ def cross_validate(estimator: BaseEstimator, X: np.ndarray, y: np.ndarray,
     validation_score: float
         Average validation score over folds
     """
-    raise NotImplementedError()
+    n_samples, n_features = X.shape
+    train_scores = []
+    validation_scores = []
+
+
+    indices_permutation = np.random.permutation(n_samples) # Find The problem here
+    #indices_permutation = np.arange(n_features)
+
+    indices_folds = np.array_split(indices_permutation, cv)
+
+    for i in range(cv):
+        val_idx = np.array(indices_folds[i])
+        train_idx = np.concatenate(
+            [indices_folds[j] for j in range(cv) if j != i])
+
+        estimator.fit(X[train_idx], y[train_idx])
+
+        train_pred = estimator.predict(X[train_idx])
+        val_pred = estimator.predict(X[val_idx])
+
+        train_score = scoring(y[train_idx], train_pred)
+        val_score = scoring(y[val_idx], val_pred)
+
+        train_scores.append(train_score)
+        validation_scores.append(val_score)
+
+    return np.average(train_scores), np.average(validation_scores)

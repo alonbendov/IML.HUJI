@@ -85,4 +85,9 @@ class PolynomialFitting(BaseEstimator):
         transformed: ndarray of shape (n_samples, k+1)
             Vandermonde matrix of given samples up to degree k
         """
+        # This is bad and not correct, but meant to be a quick fix for ex5
+        if len(X.shape) > 1:
+            X = X[:, 0]
+
+        # Any way, I am not sure that this code can work with multi-feature data
         return np.vander(X, self.deg_ + 1, increasing=True)
