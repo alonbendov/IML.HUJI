@@ -55,8 +55,7 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
         train_errors[deg], validation_errors[deg] = cross_validate(estimator,
                                                                    X_train.to_numpy(),
                                                                    y_train.to_numpy(),
-                                                                   mean_square_error,
-                                                                   FOLDS)
+                                                                   mean_square_error,                                                                   FOLDS)
     best_deg = np.argmin(validation_errors)
     best_err = np.round(validation_errors[best_deg], 2)
 
