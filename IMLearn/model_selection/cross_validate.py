@@ -43,7 +43,7 @@ def cross_validate(estimator: BaseEstimator, X: np.ndarray, y: np.ndarray,
     validation_scores = []
 
 
-    indices_permutation = np.random.permutation(n_samples)
+    indices_permutation = np.arange(n_samples)
 
     indices_folds = np.array_split(indices_permutation, cv)
 

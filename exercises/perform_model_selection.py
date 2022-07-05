@@ -36,14 +36,24 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
     """
     # Question 1 - Generate dataset for model f(x)=(x+3)(x+2)(x+1)(x-1)(x-2) + eps for eps Gaussian noise
     x_values = np.random.uniform(X_MIN, X_MAX, n_samples)
-    fx_values = (x_values + 3) * (x_values + 2) * (x_values + 1) * \
-                (x_values - 1) * (x_values - 2) \
-                + np.random.normal(0, noise, n_samples)
+    fx_noiseless = (x_values + 3) * (x_values + 2) * (x_values + 1) * \
+                   (x_values - 1) * (x_values - 2)
+    fx_values = fx_noiseless + np.random.normal(0, noise, n_samples)
 
     # and split into training- and testing portions
     X_train, y_train, X_test, y_test = \
         split_train_test(pd.DataFrame(x_values), pd.Series(fx_values),
                          TRAIN_PROPORTION)
+
+    fig = go.Figure()
+    fig.update_layout(title="f(x) randomized dataset", xaxis={'title': 'x'},
+                      yaxis={'title': 'f(x)'})
+    fig.add_trace(go.Scatter(mode='markers',x=x_values, y=fx_noiseless, name='noiseless'))
+    fig.add_trace(go.Scatter(mode='markers',x=X_test[0].to_numpy(), y=y_test.to_numpy(), name='test'))
+    fig.add_trace(go.Scatter(mode='markers',x=X_train[0].to_numpy(), y=y_train.to_numpy(), name='train'))
+    fig.show()
+    fig.write_image(f'.\\ex5_graphs\\fx-dataset-noise={noise}.jpeg',
+                    scale=2)
 
     # Question 2 - Perform CV for polynomial fitting with degrees 0,1,...,10
     degrees = np.arange(MAX_DEGREE + 1)
@@ -55,7 +65,8 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
         train_errors[deg], validation_errors[deg] = cross_validate(estimator,
                                                                    X_train.to_numpy(),
                                                                    y_train.to_numpy(),
-                                                                   mean_square_error,                                                                   FOLDS)
+                                                                   mean_square_error,
+                                                                   FOLDS)
     best_deg = np.argmin(validation_errors)
     best_err = np.round(validation_errors[best_deg], 2)
 
@@ -92,7 +103,7 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
 
 
 MIN_LAMBDA = 0
-MAX_LAMBDA = 10
+MAX_LAMBDA = 1
 
 
 def select_regularization_parameter(n_samples: int = 50,
@@ -135,10 +146,12 @@ def select_regularization_parameter(n_samples: int = 50,
             cross_validate(ridge, X_train, y_train,
                            mean_square_error)
 
-    fig = make_subplots(2, 1, subplot_titles=('Lasso', 'Ridge'), shared_xaxes=True)
-    fig.update_layout(title="Train vs Validation Performance with Change of the Regularization"
-                            "<br>"
-                            "<sup>Measured on 5-Fold CV</sup>")
+    fig = make_subplots(2, 1, subplot_titles=('Lasso', 'Ridge'),
+                        shared_xaxes=True)
+    fig.update_layout(
+        title="Train vs Validation Performance with Change of the Regularization"
+              "<br>"
+              "<sup>Measured on 5-Fold CV</sup>")
 
     fig.update_xaxes(showgrid=False, row=1, col=1)
     fig.update_xaxes(title_text="Lambda (Regularization Factor)", row=2, col=1)
@@ -181,17 +194,22 @@ def select_regularization_parameter(n_samples: int = 50,
     lasso_best_err = mean_square_error(y_test, lasso_best.predict(X_test))
     ridge_best_err = mean_square_error(y_test, ridge_best.predict(X_test))
 
-    print(f"Report for Ridge:")
-    print(f"Best k-folds validation error of {lasso_err_val_best} on lambda={lasso_best_lam}")
-    print(f"When training a model of lambda={lasso_best_lam} on all of the train "
-          f"data error of {lasso_best_err} was achieved.")
+    print(f"Report for Lasso:")
+    print(
+        f"Best k-folds validation error of {lasso_err_val_best} on lambda={lasso_best_lam}")
+    print(
+        f"When training a model of lambda={lasso_best_lam} on all of the train "
+        f"data error of {lasso_best_err} was achieved.")
     print()
 
     print(f"Report for Ridge:")
-    print(f"Best k-folds validation error of {ridge_err_val_best} on lambda={ridge_best_lam}")
-    print(f"When training a model of lambda={ridge_best_lam} on all of the train "
-          f"data error of {ridge_best_err} was achieved.")
+    print(
+        f"Best k-folds validation error of {ridge_err_val_best} on lambda={ridge_best_lam}")
+    print(
+        f"When training a model of lambda={ridge_best_lam} on all of the train "
+        f"data error of {ridge_best_err} was achieved.")
     print()
+
 
 if __name__ == '__main__':
     np.random.seed(0)
